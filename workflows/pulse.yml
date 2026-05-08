@@ -1,0 +1,51 @@
+name: System-Pulse-Core Scheduler
+
+on:
+  schedule:
+    # Executes at minute 0 past every 6th hour
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allows for manual triggering if an immediate pulse is required
+
+jobs:
+  resonate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to push commits back to the repository
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Initialize Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Execute Resonance Generator
+        run: python pulse.py
+
+      - name: Covert Commit and Push
+        run: |
+          # Configure standard GitHub Actions bot credentials
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Stage the telemetry log
+          git add system_telemetry.log
+          
+          # Define an array of standard, mundane commit messages
+          MESSAGES=(
+            "Update diagnostic telemetry"
+            "Optimize sensor polling"
+            "Refactor telemetry collection logic"
+            "Routine system thermals log update"
+            "Minor diagnostic adjustments"
+            "Log memory latency metrics"
+          )
+          
+          # Select a random message from the array
+          RANDOM_COMMIT_MSG=${MESSAGES[$RANDOM % ${#MESSAGES[@]} ]}
+          
+          # Commit and push, bypassing error if no changes occurred
+          git commit -m "$RANDOM_COMMIT_MSG" || echo "No new telemetry to commit"
+          git push
