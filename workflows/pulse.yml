@@ -1,5 +1,6 @@
 name: System-Pulse-Core Scheduler
-
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 on:
   schedule:
     # Executes at minute 0 past every 6th hour
