@@ -1,14 +1,8 @@
 # SysPulC - System Pulse Core
 
-SysPulC is a Python prototype for AI infrastructure reliability diagnostics. It
-models how multi-agent workflows can correlate rack telemetry, firmware signals,
-silicon errata hints, and interconnect failures into a structured root cause
-analysis report.
+SysPulC is an evolving Python-based AI infrastructure reliability diagnostics engine. It is designed to analyze telemetry, firmware, and platform signals across rack-scale systems, then generate structured RCA insights, risk scores, validation recommendations, and release-quality guidance.
 
-The project is intentionally scoped as an engineering showcase, not a production
-AIOps platform. It demonstrates system architecture thinking across BIOS/BMC,
-server platform debug, GPU rack telemetry, CXL/NVLink fabrics, and AI-assisted
-reliability workflows.
+The current implementation includes multi-agent diagnostics, CLI execution, sample telemetry ingestion, CI, and tests. The roadmap expands SysPulC toward FastAPI service endpoints, BIOS/BMC and Redfish/IPMI log ingestion, risk scoring, validation gap analysis, firmware dependency mapping, and LLM-assisted RCA reporting.
 
 ## Why It Matters
 
