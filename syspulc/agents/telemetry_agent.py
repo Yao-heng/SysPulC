@@ -1,65 +1,90 @@
 """
-SysPulC (System-Pulse-Core) — Telemetry Agent
-Specialized Agent for sub-ms signal analysis, voltage sags, CXL AER retries, and NVLink CRC errors.
+Telemetry agent for rack-level platform signals.
+
+The current prototype checks voltage sag, CXL AER, and NVLink CRC indicators.
 """
 
-from typing import Dict, Any, List
-from syspulc.agents.base_agent import BaseAgent, AgentRequest, AgentResponse, AgentInsight
+from syspulc.agents.base_agent import (
+    AgentInsight,
+    AgentRequest,
+    AgentResponse,
+    BaseAgent,
+)
 
 
 class TelemetryAgent(BaseAgent):
-    """Agent specialized in physical layer, interconnect, and power rail telemetry analysis."""
+    """Agent specialized in physical layer, interconnect, and power rail telemetry."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="Telemetry-Agent",
-            description="Analyzes sub-ms power rail sags, CXL AER link retries, and NVLink CRC error rates."
+            description=(
+                "Analyzes power rail sags, CXL AER events, and NVLink CRC error rates."
+            ),
         )
 
     def process(self, request: AgentRequest) -> AgentResponse:
         payload = request.payload
-        insights: List[AgentInsight] = []
+        insights: list[AgentInsight] = []
 
-        # 1. Inspect Voltage Sag / Power-Rail Stealing
         voltage_sag = payload.get("voltage_sag_mv", 0)
         if voltage_sag > 150:
-            insights.append(AgentInsight(
-                agent_name=self.name,
-                severity="CRITICAL",
-                category="Power",
-                summary=f"Transient Power-Rail Stealing detected: Voltage Sag {voltage_sag}mV exceeds 150mV threshold.",
-                evidence=[f"Telemetry Sag: {voltage_sag}mV on VDD_CPU rail", "High di/dt GPU transient pulse observed."],
-                confidence_score=0.95
-            ))
+            insights.append(
+                AgentInsight(
+                    agent_name=self.name,
+                    severity="CRITICAL",
+                    category="Power",
+                    summary=(
+                        "Transient power rail sag detected: "
+                        f"{voltage_sag} mV exceeds the 150 mV threshold."
+                    ),
+                    evidence=[
+                        f"Telemetry sag: {voltage_sag} mV on monitored power rail.",
+                        "High di/dt accelerator transient pulse observed.",
+                    ],
+                    confidence_score=0.95,
+                )
+            )
 
-        # 2. Inspect NVLink CRC Error Retries
         nvlink_crc_errors = payload.get("nvlink_crc_errors", 0)
         if nvlink_crc_errors > 50:
-            insights.append(AgentInsight(
-                agent_name=self.name,
-                severity="WARNING",
-                category="Interconnect",
-                summary=f"NVLink Fabric Degradation: CRC Error Counter = {nvlink_crc_errors}.",
-                evidence=[f"NVLink Link 0 CRC error counter: {nvlink_crc_errors}", "High retry frequency detected."],
-                confidence_score=0.88
-            ))
+            insights.append(
+                AgentInsight(
+                    agent_name=self.name,
+                    severity="WARNING",
+                    category="Interconnect",
+                    summary=(
+                        "NVLink fabric degradation detected: "
+                        f"CRC error counter is {nvlink_crc_errors}."
+                    ),
+                    evidence=[
+                        f"NVLink CRC error counter: {nvlink_crc_errors}.",
+                        "High retry frequency detected.",
+                    ],
+                    confidence_score=0.88,
+                )
+            )
 
-        # 3. Inspect CXL AER Uncorrectable Errors
         cxl_aer_fatal = payload.get("cxl_aer_fatal", False)
         if cxl_aer_fatal:
-            insights.append(AgentInsight(
-                agent_name=self.name,
-                severity="FATAL",
-                category="Memory",
-                summary="CXL Memory Fabric Poison / Uncorrectable AER Fatal Event.",
-                evidence=["CXL AER Register UESta set to Fatal", "Device-to-Host memory coherency stalled."],
-                confidence_score=0.99
-            ))
+            insights.append(
+                AgentInsight(
+                    agent_name=self.name,
+                    severity="FATAL",
+                    category="Memory",
+                    summary="CXL memory fabric poison or uncorrectable AER fatal event.",
+                    evidence=[
+                        "CXL AER register indicates an uncorrectable fatal event.",
+                        "Device-to-host memory coherency may be stalled.",
+                    ],
+                    confidence_score=0.99,
+                )
+            )
 
         status = "SUCCESS" if insights else "INCONCLUSIVE"
         return AgentResponse(
             agent_name=self.name,
             status=status,
             insights=insights,
-            metadata={"processed_events": len(payload)}
+            metadata={"processed_fields": len(payload)},
         )

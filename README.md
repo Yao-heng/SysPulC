@@ -1,73 +1,135 @@
-SysPulC (System-Pulse-Core) — Autonomous AIOps & Telemetry Intelligence Engine
-![CI Status](https://img.shields.io/badge/CI-SysPulC--CI-success) ![License](https://img.shields.io/badge/License-MIT-blue) ![Domain](https://img.shields.io/badge/Domain-AIOps%20%26%20Telemetry-orange)
-Executive Summary & Problem Statement
-SysPulC (System-Pulse-Core) is an AI-native infrastructure observability, telemetry correlation, and autonomous diagnostic engine designed for hyperscale AI compute clusters (GPU/TPU racks, GB200/NVL72, CXL fabrics). It addresses Zombie Compute, Speculative Decoding Wastage, and Asynchronous Hangs in hyperscale GPU clusters and CXL memory fabrics.
-System Architecture & Key Modules
-Module 1: Multi-Modal Telemetry Ingestor (Redfish, IPMI, BIOS/BMC Hang Logs, Kernel dmesg, PCIe/CXL AER, NVLink Sideband)
-Module 2: RAG & Vector Knowledge Engine (Ingesting Intel/NVIDIA/AMD Datasheets, Errata, Historical RCA, Jira, Debug Notes)
-Module 3: Agentic Workflow & Multi-Agent Orchestration
-Telemetry-Agent: Monitors sub-ms voltage sags, power sequencing, and interconnect retries.
-Errata-Agent: Cross-references silicon-level errata and firmware microcode dependencies.
-Power/Thermal-Agent: Intercepts transient power sags and thermal anomalies.
-RCA-Agent: Synthesizes root cause analysis and automated mitigation playbooks.
-Module 4: Rack-Scale Interconnect & CXL Fabric Health Watchdog
-Multi-Agent Workflow Block Diagram
+# SysPulC - System Pulse Core
 
-[Telemetry Sources] -> [Ingestor] -> [Agentic Workflow Engine] <-> [RAG Knowledge Base]
-                                    |
-                           [Diagnostic Insights & RCA]
+SysPulC is a Python prototype for AI infrastructure reliability diagnostics. It
+models how multi-agent workflows can correlate rack telemetry, firmware signals,
+silicon errata hints, and interconnect failures into a structured root cause
+analysis report.
 
+The project is intentionally scoped as an engineering showcase, not a production
+AIOps platform. It demonstrates system architecture thinking across BIOS/BMC,
+server platform debug, GPU rack telemetry, CXL/NVLink fabrics, and AI-assisted
+reliability workflows.
 
-name: SysPulC-CI
-on: [push, pull_request]
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run Diagnostics Engine Test
-        run: make test-agents
-Quantified Impact Metrics & Attribution
-MTTR Reduction: Cuts Mean Time to Resolution by 70%.
-Power Wastage Reclamation: 15-25% reclamation by intercepting transient power sags and link degradations.
-Repository Directory Structure
+## Why It Matters
 
-[Raw Telemetry] -> [Orchestrator]
-                    |
-        +-----------+-----------+
-        |           |           |
-[Telemetry-Agent] [Errata-Agent] [Power/Thermal-Agent]
-        |           |           |
-        +-----------+-----------+
-                    |
-         [RAG Vector Knowledge Base]
-                    |
-              [RCA-Agent] -> [Insights]
-CI/CD & GitHub Actions Setup
+AI compute clusters are increasingly difficult to debug because failure signals
+span multiple layers:
 
+- BIOS, BMC, firmware, and microcode revisions
+- Power rail transients and thermal envelope limits
+- PCIe, CXL, NVLink, and rack-scale interconnect health
+- Kernel, BMC SEL, Redfish, and platform event logs
+- Validation coverage gaps and historical RCA knowledge
+
+SysPulC explores a practical workflow for turning those signals into structured
+diagnostic evidence and owner-ready mitigation guidance.
+
+## Current Prototype Scope
+
+Implemented today:
+
+- Pydantic-based request, response, and insight schemas
+- Base agent abstraction for diagnostic workflows
+- Telemetry agent for voltage sag, NVLink CRC, and CXL AER signals
+- Errata agent for firmware and silicon errata style checks
+- RCA agent for multi-agent insight synthesis
+- CLI demo for rack-level diagnosis
+- GitHub Actions workflow for basic CLI validation
+- Unit tests for agent behavior
+
+Planned extensions:
+
+- BIOS/BMC, Redfish, IPMI, dmesg, PCIe AER, and CXL log ingestors
+- FastAPI service layer for interactive analysis
+- RAG knowledge base for public errata notes, debug checklists, and RCA history
+- Risk scoring and mitigation playbook generation
+- Prompt-injection-aware LLM report generation from trusted evidence
+
+## Architecture
+
+```text
+Telemetry / Firmware Signals
+          |
+          v
+   Agent Request Schema
+          |
+          v
++-------------------+      +----------------+
+| Telemetry Agent   |      | Errata Agent   |
+| - voltage sag     |      | - silicon hint |
+| - NVLink CRC      |      | - BIOS/BMC rev |
+| - CXL AER fatal   |      +----------------+
++-------------------+              |
+          |                         |
+          +-----------+-------------+
+                      v
+                 RCA Agent
+                      |
+                      v
+          Structured Diagnostic Report
+```
+
+## Repository Structure
+
+```text
 syspulc/
-├── agents/
-├── ingestors/
-├── rag/
-├── telemetry/
-├── cli/
-└── tests/
-Rack-Scale Implementation & Field Execution Commands
-CXL Memory Fabric commands:
-cxl list -M -v
-cxl monitor -e
-lspci -vvv | grep UESta
-NVLink / NVSwitch GPU Fabric commands:
-dcgmi nvlink -e
-nvidia-smi nvlink --status
-dcgmi diag -r 3
-Redfish & Out-of-Band Rack Control commands:
-# Redfish REST API curl calls for Power Capping and SEL logs
-curl -k -u admin:password -X GET https://[BMC_IP]/redfish/v1/Systems/Self/LogServices/EventLog/Entries
-# ipmitool commands for PSU/Power Rail telemetry
-ipmitool sensor list | grep PS
-SysPulC Custom CLI Execution commands:
-syspulc-cli analyze --rack-id RACK-01
-syspulc-cli agent run --agent errata_agent
-syspulc-cli rca generate
+  agents/
+    base_agent.py
+    telemetry_agent.py
+    errata_agent.py
+    rca_agent.py
+  cli/
+    syspulc_cli.py
+samples/
+  telemetry_event.json
+scripts/
+  generate_sample_telemetry.py
+tests/
+  test_agents.py
+.github/workflows/
+  syspulc-ci.yml
+```
 
+## Quick Start
+
+```bash
+python -m pip install -r requirements.txt
+python -m syspulc.cli.syspulc_cli --rack-id RACK-CI-TEST
+pytest
+```
+
+Example CLI output includes:
+
+- RCA severity
+- agent name
+- diagnostic category
+- summary
+- supporting evidence
+- confidence score
+
+## Example Use Case
+
+SysPulC can model a rack incident where:
+
+- A GPU workload triggers a voltage sag over the warning threshold
+- NVLink CRC counters indicate interconnect degradation
+- CXL AER reports a fatal memory fabric condition
+- BIOS/BMC firmware revisions are misaligned
+- The RCA agent produces a consolidated diagnosis for firmware, platform, and
+  data center operations teams
+
+## Career Positioning
+
+This project is designed to highlight cross-domain experience in:
+
+- Server BIOS, BMC, firmware, and platform reliability
+- AI infrastructure telemetry and rack-scale failure analysis
+- Multi-agent diagnostic workflow design
+- Python-based reliability tooling
+- Secure and explainable AI-assisted RCA workflows
+
+## Safety And Data Notes
+
+All data in this repository is fictional demo data. Do not commit proprietary
+logs, customer telemetry, NDA errata content, credentials, or production system
+identifiers.

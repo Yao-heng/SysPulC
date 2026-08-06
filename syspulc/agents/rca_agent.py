@@ -1,58 +1,75 @@
 """
-SysPulC (System-Pulse-Core) — RCA (Root Cause Analysis) Synthesis Agent
-Master Agent that correlates multi-agent diagnostic insights and generates structured RCA reports.
+RCA synthesis agent.
+
+Correlates multi-agent diagnostic insights and generates a structured root
+cause analysis response.
 """
 
-from typing import Dict, Any, List
-from syspulc.agents.base_agent import BaseAgent, AgentRequest, AgentResponse, AgentInsight
+from syspulc.agents.base_agent import (
+    AgentInsight,
+    AgentRequest,
+    AgentResponse,
+    BaseAgent,
+)
 
 
 class RCAAgent(BaseAgent):
-    """Master Agent for synthesizing multi-agent findings into structured RCA reports."""
+    """Master agent for synthesizing findings into a root cause analysis report."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="RCA-Agent",
-            description="Correlates insights across Telemetry, Errata, and Power agents to produce Root Cause Analysis."
+            description="Correlates telemetry and errata insights into an RCA report.",
         )
 
-    def synthesize(self, request: AgentRequest, agent_responses: List[AgentResponse]) -> AgentResponse:
-        """Synthesizes insights from all executed agents."""
-        all_insights: List[AgentInsight] = []
+    def synthesize(
+        self,
+        request: AgentRequest,
+        agent_responses: list[AgentResponse],
+    ) -> AgentResponse:
+        """Synthesize insights from all executed agents."""
+        all_insights: list[AgentInsight] = []
         critical_count = 0
 
-        for resp in agent_responses:
-            for insight in resp.insights:
+        for response in agent_responses:
+            for insight in response.insights:
                 all_insights.append(insight)
-                if insight.severity in ["CRITICAL", "FATAL"]:
+                if insight.severity in {"CRITICAL", "FATAL"}:
                     critical_count += 1
 
-        # Synthesize Root Cause Summary
         if critical_count > 0:
-            primary_cause = all_insights[0].summary if all_insights else "Unknown Multi-Domain Anomaly"
+            primary_cause = all_insights[0].summary if all_insights else "Unknown anomaly"
             rca_summary = (
-                f"ROOT CAUSE CONFIRMED: System hang/instability on rack {request.rack_id} "
-                f"triggered by '{primary_cause}'. Multi-agent correlation identified {len(all_insights)} findings."
+                f"Rack {request.rack_id} has a confirmed high-risk instability path. "
+                f"Primary signal: {primary_cause} Multi-agent correlation identified "
+                f"{len(all_insights)} finding(s)."
             )
             severity = "CRITICAL"
+            confidence = 0.96
         else:
-            rca_summary = f"Rack {request.rack_id} telemetry within nominal thresholds. No critical RCA triggers."
+            rca_summary = (
+                f"Rack {request.rack_id} telemetry is within the current prototype thresholds."
+            )
             severity = "INFO"
+            confidence = 0.50
 
         rca_insight = AgentInsight(
             agent_name=self.name,
             severity=severity,
-            category="RCA_Synthesis",
+            category="RCA",
             summary=rca_summary,
-            evidence=[f"Aggregated {len(all_insights)} insights across agents."],
-            confidence_score=0.96 if critical_count > 0 else 0.50
+            evidence=[f"Aggregated {len(all_insights)} insight(s) across agents."],
+            confidence_score=confidence,
         )
 
         return AgentResponse(
             agent_name=self.name,
             status="SUCCESS",
-            insights=[rca_insight] + all_insights,
-            metadata={"correlated_agents": len(agent_responses), "critical_findings": critical_count}
+            insights=[rca_insight, *all_insights],
+            metadata={
+                "correlated_agents": len(agent_responses),
+                "critical_findings": critical_count,
+            },
         )
 
     def process(self, request: AgentRequest) -> AgentResponse:

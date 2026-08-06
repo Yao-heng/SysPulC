@@ -23,6 +23,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Multi-Agent Diagnostic Engine Test
+      - name: Run Unit Tests
         run: |
-          python -m syspulc.cli.syspulc_cli --rack-id RACK-CI-TEST
+          pytest
+
+      - name: Run CLI Smoke Test
+        run: |
+          python -m syspulc.cli.syspulc_cli --input samples/telemetry_event.json

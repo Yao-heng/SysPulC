@@ -1,0 +1,13 @@
+{
+  "rack_id": "RACK-DEMO-01",
+  "event_id": "EVT-DEMO-0001",
+  "timestamp": "2026-01-01T00:00:00+00:00",
+  "payload": {
+    "voltage_sag_mv": 180.0,
+    "nvlink_crc_errors": 120,
+    "cxl_aer_fatal": true,
+    "reset_gpr_residual": true,
+    "bios_version": "v1.0.4",
+    "bmc_version": "v2.5.1"
+  }
+}
