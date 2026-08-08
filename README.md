@@ -1,8 +1,14 @@
 # SysPulC - System Pulse Core
 
-SysPulC is an evolving Python-based AI infrastructure reliability diagnostics engine. It is designed to analyze telemetry, firmware, and platform signals across rack-scale systems, then generate structured RCA insights, risk scores, validation recommendations, and release-quality guidance.
+SysPulC is an evolving Python-based AI infrastructure reliability diagnostics
+engine. It analyzes telemetry, firmware, and platform signals across rack-scale
+systems, then generates structured RCA insights, rack-level risk scores,
+suggested owners, and release-quality guidance.
 
-The current implementation includes multi-agent diagnostics, CLI execution, sample telemetry ingestion, CI, and tests. The roadmap expands SysPulC toward FastAPI service endpoints, BIOS/BMC and Redfish/IPMI log ingestion, risk scoring, validation gap analysis, firmware dependency mapping, and LLM-assisted RCA reporting.
+The project is intentionally scoped as a lightweight working engine, not a
+production AIOps platform. It demonstrates system architecture thinking across
+BIOS/BMC, server platform debug, GPU rack telemetry, CXL/NVLink fabrics,
+release-quality decisions, and AI-assisted reliability workflows.
 
 ## Why It Matters
 
@@ -18,7 +24,7 @@ span multiple layers:
 SysPulC explores a practical workflow for turning those signals into structured
 diagnostic evidence and owner-ready mitigation guidance.
 
-## Current Prototype Scope
+## Current Implementation
 
 Implemented today:
 
@@ -27,16 +33,19 @@ Implemented today:
 - Telemetry agent for voltage sag, NVLink CRC, and CXL AER signals
 - Errata agent for firmware and silicon errata style checks
 - RCA agent for multi-agent insight synthesis
+- Rack-level risk scoring with risk drivers, suggested owners, and release gate
+  recommendations
 - CLI demo for rack-level diagnosis
-- GitHub Actions workflow for basic CLI validation
-- Unit tests for agent behavior
+- FastAPI service with `/health`, `/sample`, and `/analyze` endpoints
+- GitHub Actions workflow for tests, CLI smoke, and API import validation
+- Unit tests for agents and API behavior
 
 Planned extensions:
 
 - BIOS/BMC, Redfish, IPMI, dmesg, PCIe AER, and CXL log ingestors
-- FastAPI service layer for interactive analysis
 - RAG knowledge base for public errata notes, debug checklists, and RCA history
-- Risk scoring and mitigation playbook generation
+- Validation gap analysis and firmware dependency mapping
+- Mitigation playbook generation
 - Prompt-injection-aware LLM report generation from trusted evidence
 
 ## Architecture
@@ -60,7 +69,7 @@ Telemetry / Firmware Signals
                  RCA Agent
                       |
                       v
-          Structured Diagnostic Report
+       Structured RCA + Risk Scoring
 ```
 
 ## Repository Structure
@@ -74,12 +83,16 @@ syspulc/
     rca_agent.py
   cli/
     syspulc_cli.py
+  api.py
+  diagnostics.py
+  risk_scoring.py
 samples/
   telemetry_event.json
 scripts/
   generate_sample_telemetry.py
 tests/
   test_agents.py
+  test_api.py
 .github/workflows/
   syspulc-ci.yml
 ```
@@ -89,10 +102,23 @@ tests/
 ```bash
 python -m pip install -r requirements.txt
 python -m syspulc.cli.syspulc_cli --rack-id RACK-CI-TEST
+uvicorn syspulc.api:app --reload
 pytest
 ```
 
-Example CLI output includes:
+API endpoints:
+
+- `GET /health`
+- `GET /sample`
+- `POST /analyze`
+
+Example API call:
+
+```bash
+curl -X POST http://127.0.0.1:8000/analyze
+```
+
+Example CLI and API output includes:
 
 - RCA severity
 - agent name
@@ -100,6 +126,9 @@ Example CLI output includes:
 - summary
 - supporting evidence
 - confidence score
+- rack risk score
+- suggested owners
+- release gate recommendation
 
 ## Example Use Case
 
@@ -109,8 +138,8 @@ SysPulC can model a rack incident where:
 - NVLink CRC counters indicate interconnect degradation
 - CXL AER reports a fatal memory fabric condition
 - BIOS/BMC firmware revisions are misaligned
-- The RCA agent produces a consolidated diagnosis for firmware, platform, and
-  data center operations teams
+- The RCA agent produces a consolidated diagnosis and risk score for firmware,
+  platform, validation, ODM, and data center operations teams
 
 ## Career Positioning
 

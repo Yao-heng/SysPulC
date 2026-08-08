@@ -7,9 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from syspulc.agents.base_agent import AgentRequest
-from syspulc.agents.errata_agent import ErrataAgent
-from syspulc.agents.rca_agent import RCAAgent
-from syspulc.agents.telemetry_agent import TelemetryAgent
+from syspulc.diagnostics import DiagnosticEngine
 
 
 def load_event(path: Path) -> dict[str, Any]:
@@ -73,12 +71,8 @@ def main() -> None:
     print(f"Timestamp: {request.timestamp}")
     print("=" * 72)
 
-    telemetry_response = TelemetryAgent().process(request)
-    errata_response = ErrataAgent().process(request)
-    final_response = RCAAgent().synthesize(
-        request,
-        [telemetry_response, errata_response],
-    )
+    report = DiagnosticEngine().analyze(request)
+    final_response = report.rca
 
     print("\nDiagnostic Insights And RCA Report")
     for insight in final_response.insights:
@@ -87,6 +81,18 @@ def main() -> None:
         print(f"Confidence: {insight.confidence_score * 100:.1f}%")
         for evidence in insight.evidence:
             print(f"  - {evidence}")
+
+    print("\nRack Risk Assessment")
+    print(f"Risk Score: {report.risk.score}/100 ({report.risk.level})")
+    print(f"Release Gate: {report.risk.release_gate_recommendation}")
+    if report.risk.suggested_owners:
+        print("Suggested Owners:")
+        for owner in report.risk.suggested_owners:
+            print(f"  - {owner}")
+    if report.risk.drivers:
+        print("Risk Drivers:")
+        for driver in report.risk.drivers[:5]:
+            print(f"  - {driver}")
 
     print("\n" + "=" * 72)
     print("SysPulC diagnosis completed successfully.")

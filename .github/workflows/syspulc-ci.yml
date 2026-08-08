@@ -30,3 +30,7 @@ jobs:
       - name: Run CLI Smoke Test
         run: |
           python -m syspulc.cli.syspulc_cli --input samples/telemetry_event.json
+
+      - name: Run API Import Smoke Test
+        run: |
+          python -c "from syspulc.api import app; print(app.title)"
