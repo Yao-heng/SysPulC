@@ -1,0 +1,34 @@
+{
+  "issue_id": "HANG-DEMO-0001",
+  "phase": "reboot",
+  "symptom": "Intermittent hang during warm reboot loop after DVT stress on dGPU high-power SKU.",
+  "platform": "workstation",
+  "available_logs": [
+    "BMC SEL abnormal reset marker",
+    "validation loop timestamp"
+  ],
+  "missing_logs": [
+    "complete OS dump",
+    "BIOS serial checkpoint",
+    "EC reset transition trace"
+  ],
+  "observed_state": {
+    "screen_frozen": true,
+    "bmc_reachable": true,
+    "ping_alive": false,
+    "power_button_long_press_works": true
+  },
+  "reproduce_rate": "3/50",
+  "recent_changes": [
+    "BIOS 1.0.4",
+    "EC 1.2.1",
+    "GPU driver 555.10"
+  ],
+  "versions": {
+    "bios": "1.0.4",
+    "ec": "1.2.1",
+    "bmc": "2.5.1",
+    "gpu_driver": "555.10"
+  },
+  "stress_condition": "DVT long-run stress followed by warm reboot loop"
+}

@@ -55,3 +55,15 @@ def test_analyze_inline_nominal_event_returns_low_risk():
     payload = response.json()
     assert payload["risk"]["level"] == "low"
     assert payload["risk"]["score"] < 35
+
+
+def test_analyze_hang_sample_returns_triage_plan():
+    response = client.post("/analyze/hang")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["issue_id"] == "HANG-DEMO-0001"
+    assert payload["release_risk"] == "high"
+    assert payload["possible_root_cause_domains"]
+    assert payload["next_evidence_capture"]
+    assert payload["ab_isolation_plan"]

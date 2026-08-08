@@ -33,10 +33,13 @@ Implemented today:
 - Telemetry agent for voltage sag, NVLink CRC, and CXL AER signals
 - Errata agent for firmware and silicon errata style checks
 - RCA agent for multi-agent insight synthesis
+- Intermittent hang triage agent for state classification, log expectation,
+  no-log interpretation, evidence capture planning, and A/B isolation guidance
 - Rack-level risk scoring with risk drivers, suggested owners, and release gate
   recommendations
 - CLI demo for rack-level diagnosis
-- FastAPI service with `/health`, `/sample`, and `/analyze` endpoints
+- FastAPI service with `/health`, `/sample`, `/analyze`, and `/analyze/hang`
+  endpoints
 - GitHub Actions workflow for tests, CLI smoke, and API import validation
 - Unit tests for agents and API behavior
 
@@ -49,6 +52,8 @@ Planned extensions:
 - Prompt-injection-aware LLM report generation from trusted evidence
 
 ## Architecture
+
+Telemetry RCA workflow:
 
 ```text
 Telemetry / Firmware Signals
@@ -72,6 +77,41 @@ Telemetry / Firmware Signals
        Structured RCA + Risk Scoring
 ```
 
+Intermittent hang triage workflow:
+
+```text
+Intermittent Hang Issue
+          |
+          v
+ HangTriageRequest
+ - phase: runtime / shutdown / reboot / boot / pre_boot / sleep_resume / unknown
+ - available logs
+ - missing logs
+ - observed physical state
+ - reproduce rate
+ - recent changes
+          |
+          v
+ HangTriageAgent
+ - classify hang state
+ - determine expected vs missing evidence
+ - explain when no OS log is expected
+ - identify likely root cause domains
+ - recommend next evidence capture
+ - generate A/B isolation plan
+          |
+          v
+ HangTriageReport
+ - release risk
+ - next actions
+ - release gate escalation guidance
+```
+
+This workflow captures a practical cross-layer debug skill: when an intermittent
+hang has no useful OS log, the tool should not stop at "no data." It should
+classify the hang phase, explain which logs are expected or not expected, and
+define the instrumentation needed for the next reproduction loop.
+
 ## Repository Structure
 
 ```text
@@ -81,6 +121,7 @@ syspulc/
     telemetry_agent.py
     errata_agent.py
     rca_agent.py
+    hang_triage_agent.py
   cli/
     syspulc_cli.py
   api.py
@@ -88,11 +129,13 @@ syspulc/
   risk_scoring.py
 samples/
   telemetry_event.json
+  intermittent_hang_event.json
 scripts/
   generate_sample_telemetry.py
 tests/
   test_agents.py
   test_api.py
+  test_hang_triage.py
 .github/workflows/
   syspulc-ci.yml
 ```
@@ -111,11 +154,18 @@ API endpoints:
 - `GET /health`
 - `GET /sample`
 - `POST /analyze`
+- `POST /analyze/hang`
 
-Example API call:
+Example telemetry RCA API call:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/analyze
+```
+
+Example intermittent hang triage API call:
+
+```bash
+curl -X POST http://127.0.0.1:8000/analyze/hang
 ```
 
 Example CLI and API output includes:
@@ -129,6 +179,11 @@ Example CLI and API output includes:
 - rack risk score
 - suggested owners
 - release gate recommendation
+- intermittent hang state classification
+- expected and likely missing logs
+- no-log interpretation
+- next evidence capture plan
+- A/B isolation plan
 
 ## Example Use Case
 
@@ -140,6 +195,16 @@ SysPulC can model a rack incident where:
 - BIOS/BMC firmware revisions are misaligned
 - The RCA agent produces a consolidated diagnosis and risk score for firmware,
   platform, validation, ODM, and data center operations teams
+
+SysPulC can also model an intermittent reboot hang where:
+
+- The issue reproduces only 3 times in 50 warm reboot loops
+- BMC SEL has a coarse abnormal reset marker
+- OS dump, BIOS serial checkpoint, and EC reset trace are missing
+- ODM reporting is incomplete and ownership is unclear
+- The hang triage agent explains which logs may be unavailable by design, then
+  recommends BIOS checkpoint, EC/BMC reset logging, POST code capture, power
+  rail timing capture, A/B rollback, and release gate escalation
 
 ## Career Positioning
 
