@@ -28,3 +28,8 @@ packages = ["syspulc", "syspulc.agents", "syspulc.cli", "syspulc.ingestors"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Make a bare `pytest` run work from a fresh clone without installing the
+# package first (CI does exactly that; `python -m pytest` masked this by
+# putting the CWD on sys.path, which is why CI failed with
+# "No module named 'syspulc'" while local runs passed).
+pythonpath = ["."]
