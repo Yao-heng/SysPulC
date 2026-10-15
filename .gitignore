@@ -8,3 +8,6 @@ dist/
 *.egg-info/
 system_telemetry.log
 uvicorn*.log
+# Output of scripts/generate_sample_telemetry.py (random demo data; the
+# stable fixture is samples/telemetry_event.json and is committed on purpose)
+samples/generated/

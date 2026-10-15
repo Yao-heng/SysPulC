@@ -5,7 +5,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 
-DEFAULT_OUTPUT = Path("samples") / "telemetry_event.json"
+# Generated events go to a dedicated, gitignored directory. This script must
+# never overwrite samples/telemetry_event.json: that bundled file is a stable
+# fixture that the API and the test suite depend on.
+DEFAULT_OUTPUT = Path("samples") / "generated" / "telemetry_event.json"
 
 
 def build_sample_event(rack_id: str) -> dict:
