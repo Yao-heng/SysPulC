@@ -24,7 +24,7 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["syspulc", "syspulc.agents", "syspulc.cli", "syspulc.ingestors", "syspulc.rag", "syspulc.telemetry"]
+packages = ["syspulc", "syspulc.agents", "syspulc.cli", "syspulc.ingestors"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

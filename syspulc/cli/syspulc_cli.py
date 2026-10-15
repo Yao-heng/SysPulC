@@ -8,6 +8,7 @@ from typing import Any
 
 from syspulc.agents.base_agent import AgentRequest
 from syspulc.diagnostics import DiagnosticEngine
+from syspulc.ingestors.redfish_ingestor import load_redfish_request
 
 
 def load_event(path: Path) -> dict[str, Any]:
@@ -16,6 +17,9 @@ def load_event(path: Path) -> dict[str, Any]:
 
 
 def build_request(args: argparse.Namespace) -> AgentRequest:
+    if args.redfish_input:
+        return load_redfish_request(args.redfish_input)
+
     if args.input:
         event = load_event(args.input)
         return AgentRequest(
@@ -47,6 +51,11 @@ def main() -> None:
     )
     parser.add_argument("--rack-id", default="RACK-01", help="Target rack or chassis ID.")
     parser.add_argument("--input", type=Path, help="Optional JSON telemetry event envelope.")
+    parser.add_argument(
+        "--redfish-input",
+        type=Path,
+        help="Optional Redfish-style snapshot JSON, converted by the Redfish ingestor.",
+    )
     parser.add_argument("--voltage-sag", type=float, default=180.0, help="Voltage sag in mV.")
     parser.add_argument("--nvlink-errors", type=int, default=120, help="NVLink CRC error counter.")
     parser.add_argument(
