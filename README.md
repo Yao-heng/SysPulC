@@ -156,17 +156,25 @@ API endpoints:
 - `POST /analyze`
 - `POST /analyze/hang`
 
-Example telemetry RCA API call:
+Example telemetry RCA API call (sends the bundled sample event):
 
 ```bash
-curl -X POST http://127.0.0.1:8000/analyze
+curl -X POST http://127.0.0.1:8000/analyze \
+  -H "Content-Type: application/json" \
+  -d @samples/telemetry_event.json
 ```
 
 Example intermittent hang triage API call:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/analyze/hang
+curl -X POST http://127.0.0.1:8000/analyze/hang \
+  -H "Content-Type: application/json" \
+  -d @samples/intermittent_hang_event.json
 ```
+
+Both `POST` endpoints also accept an empty body, in which case the bundled
+sample event is analyzed as a demo default. `GET /sample` returns the sample
+request payload so you can inspect or modify the request format.
 
 Example CLI and API output includes:
 
