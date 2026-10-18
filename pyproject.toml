@@ -21,10 +21,21 @@ dependencies = [
 dev = [
     "pytest>=7.0.0",
     "httpx>=0.27.0",
+    "mypy>=1.10",
 ]
 
 [tool.setuptools]
 packages = ["syspulc", "syspulc.agents", "syspulc.cli", "syspulc.ingestors"]
+
+[tool.mypy]
+python_version = "3.11"
+# Progressive strictness: every function in the package must be annotated
+# (disallow_untyped_defs) and functions must not silently return Any.
+# Tests and the sample generator script are checked with the same settings
+# via the CI invocation `mypy syspulc scripts`.
+disallow_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

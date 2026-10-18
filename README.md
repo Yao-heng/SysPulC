@@ -29,8 +29,8 @@ Implemented today:
   sensors, BIOS/BMC versions, EventLog entries) into the native SysPulC
   event format (`syspulc/ingestors/`)
 - **CLI and FastAPI service** sharing one diagnostic engine
-- **Test suite + CI** — pytest on every push, plus CLI and API smoke tests
-  in GitHub Actions
+- **Test suite + CI** — pytest and mypy (strict annotation checks) on
+  every push, plus CLI and API smoke tests in GitHub Actions
 
 Planned, **not** implemented yet:
 
@@ -72,7 +72,7 @@ Run the tests:
 pytest
 ```
 
-Expected result: `16 passed`.
+Expected result: `25 passed`.
 
 Start the API service:
 
@@ -166,6 +166,7 @@ tests/
   test_api.py
   test_hang_triage.py
   test_redfish_ingestor.py
+  test_risk_scoring.py
   test_sample_generator.py
 .github/workflows/
   syspulc-ci.yml

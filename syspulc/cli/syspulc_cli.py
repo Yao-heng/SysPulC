@@ -13,7 +13,10 @@ from syspulc.ingestors.redfish_ingestor import load_redfish_request
 
 def load_event(path: Path) -> dict[str, Any]:
     """Load a SysPulC event envelope from JSON."""
-    return json.loads(path.read_text(encoding="utf-8"))
+    data: Any = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"Event envelope in {path} must be a JSON object.")
+    return data
 
 
 def build_request(args: argparse.Namespace) -> AgentRequest:
